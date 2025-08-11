@@ -1,4 +1,4 @@
-# Edge AI Recyclable Classification - Complete Report
+# Edge AI Recyclable Classification - Report
 
 ## Project Summary
 Lightweight Edge AI system for real-time recyclable item classification on Raspberry Pi and similar edge devices.
@@ -45,13 +45,6 @@ Epoch 3/3 - loss: 0.5672 - accuracy: 0.733
 | Glass | 0.74 | 0.75 | 0.74 | 20 |
 | **Avg/Total** | **0.73** | **0.73** | **0.73** | **60** |
 
-### Performance Comparison
-| Deployment | Accuracy | Speed | Cost/Month | Offline |
-|------------|----------|-------|------------|---------|
-| **Edge AI** | 73.3% | 6.8 ms | $0 | ✅ Yes |
-| Cloud API | 85-90% | 150-300 ms | $15-50 | ❌ No |
-| Mobile CPU | 68-75% | 25-50 ms | $0 | ✅ Yes |
-
 ## Deployment Steps
 
 ### Step 1: Hardware Setup
@@ -89,111 +82,7 @@ mkdir ~/recyclable-ai
 cd ~/recyclable-ai
 ```
 
-### Step 4: Production Code
-```python
-#!/usr/bin/env python3
-"""
-Production Edge AI Classifier for Raspberry Pi
-"""
-import tflite_runtime.interpreter as tflite
-import numpy as np
-from PIL import Image
-import time
-try:
-    from picamera import PiCamera
-    CAMERA_AVAILABLE = True
-except ImportError:
-    CAMERA_AVAILABLE = False
-
-class RecyclableClassifier:
-    def __init__(self, model_path='model.tflite'):
-        self.interpreter = tflite.Interpreter(model_path=model_path)
-        self.interpreter.allocate_tensors()
-        
-        self.input_details = self.interpreter.get_input_details()
-        self.output_details = self.interpreter.get_output_details()
-        
-        self.classes = ['plastic', 'metal', 'glass']
-        print(f"Model loaded. Input shape: {self.input_details[0]['shape']}")
-    
-    def preprocess_image(self, image_path_or_array):
-        """Prepare image for inference"""
-        if isinstance(image_path_or_array, str):
-            image = Image.open(image_path_or_array)
-        else:
-            image = Image.fromarray(image_path_or_array)
-        
-        # Resize and normalize
-        image = image.resize((32, 32))
-        image_array = np.array(image, dtype=np.float32) / 255.0
-        return np.expand_dims(image_array, axis=0)
-    
-    def classify(self, image_input):
-        """Classify recyclable item"""
-        # Preprocess
-        input_data = self.preprocess_image(image_input)
-        
-        # Run inference
-        start_time = time.time()
-        self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
-        self.interpreter.invoke()
-        inference_time = (time.time() - start_time) * 1000  # ms
-        
-        # Get results
-        output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
-        prediction_idx = np.argmax(output_data[0])
-        confidence = output_data[0][prediction_idx]
-        
-        return {
-            'class': self.classes[prediction_idx],
-            'confidence': float(confidence),
-            'inference_time_ms': inference_time,
-            'all_scores': {self.classes[i]: float(output_data[0][i]) 
-                          for i in range(len(self.classes))}
-        }
-
-def main():
-    """Main application loop"""
-    classifier = RecyclableClassifier()
-    
-    if CAMERA_AVAILABLE:
-        # Real-time camera classification
-        camera = PiCamera()
-        camera.resolution = (640, 480)
-        
-        print("Starting real-time classification...")
-        print("Press Ctrl+C to stop")
-        
-        try:
-            while True:
-                # Capture image
-                camera.capture('temp.jpg')
-                
-                # Classify
-                result = classifier.classify('temp.jpg')
-                
-                print(f"Detected: {result['class']} "
-                      f"({result['confidence']:.2f} confidence, "
-                      f"{result['inference_time_ms']:.1f}ms)")
-                
-                time.sleep(1)  # Classify every second
-                
-        except KeyboardInterrupt:
-            camera.close()
-            print("\nStopped.")
-    else:
-        # Test with sample image
-        print("Camera not available. Testing with sample...")
-        # Create test image (in practice, use real image)
-        test_image = np.random.randint(0, 255, (32, 32, 3), dtype=np.uint8)
-        result = classifier.classify(test_image)
-        print(f"Test result: {result}")
-
-if __name__ == "__main__":
-    main()
-```
-
-### Step 5: System Optimization
+### Step 4: System Optimization
 ```bash
 # Increase GPU memory for better performance
 sudo nano /boot/config.txt
@@ -257,41 +146,11 @@ sudo systemctl start recyclable-ai.service
 - **Cloud API**: 285 ms average (network + processing + response)
 - **Speed Improvement**: 42x faster with edge deployment
 
-### Cost Analysis (Per Device/Year)
-| Approach | Hardware | Software | Network | Total |
-|----------|----------|----------|---------|-------|
-| **Edge AI** | $75 | $0 | $0 | **$75** |
-| Cloud API | $35 | $180-600 | $120 | **$335-755** |
-| **Savings** | - | - | - | **77-90%** |
-
 ### Privacy & Security
 - **Data Locality**: 100% local processing
 - **Network Exposure**: Zero external data transmission
 - **GDPR Compliance**: Full compliance by design
 - **Attack Surface**: Minimal (no cloud dependencies)
-
-## Real-World Applications
-
-### Deployment Scenarios
-1. **Smart Recycling Bins**
-   - Accuracy requirement: >70% ✅
-   - Speed requirement: <100ms ✅
-   - Cost target: <$100 ✅
-
-2. **Educational Kiosks**
-   - Interactive learning tool
-   - Real-time feedback
-   - Offline operation required ✅
-
-3. **Manufacturing QC**
-   - Material sorting
-   - Continuous operation
-   - Low false positive rate needed
-
-4. **Mobile Applications**
-   - On-device processing
-   - Privacy-focused
-   - Battery efficient
 
 ## Limitations & Improvements
 
@@ -301,32 +160,3 @@ sudo systemctl start recyclable-ai.service
 - **Training Data**: Synthetic data used for demo
 - **Lighting Sensitivity**: Performance drops in poor lighting
 
-### Recommended Improvements
-1. **Expand Dataset**: Use real recyclable item images (5,000+ per class)
-2. **Add Classes**: Include cardboard, batteries, electronics
-3. **Data Augmentation**: Rotation, scaling, lighting variations
-4. **Transfer Learning**: Use pre-trained MobileNet base
-5. **Post-processing**: Implement confidence thresholding
-6. **Multi-model**: Separate models for different recyclable categories
-
-## Conclusion
-
-This Edge AI prototype successfully demonstrates:
-- ✅ **Feasible Accuracy**: 73.3% classification accuracy
-- ✅ **Real-time Performance**: 6.8ms inference time
-- ✅ **Deployment Ready**: Complete Raspberry Pi setup
-- ✅ **Cost Effective**: 77-90% cost savings vs cloud
-- ✅ **Privacy Compliant**: 100% local processing
-
-The system is ready for pilot deployment in controlled environments and provides a solid foundation for production-scale recyclable classification systems.
-
-### Next Steps
-1. Collect real-world recyclable image dataset
-2. Retrain with expanded data for >85% accuracy
-3. Deploy in test environment (school/office)
-4. Monitor performance and collect feedback
-5. Scale to production deployment
-
-**Total Development Time**: ~4 hours  
-**Deployment Time**: ~30 minutes  
-**Production Ready**: Yes (with real data)
