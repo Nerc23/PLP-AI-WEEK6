@@ -1,0 +1,65 @@
+graph TD
+    %% Sensor Layer
+    A[Soil Moisture Sensors] --> E[Edge Computing Node]
+    B[Temperature/Humidity Sensors] --> E
+    C[pH/EC Sensors] --> E
+    D[Camera Modules] --> E
+    F[Weather Station] --> E
+    G[NPK Sensors] --> E
+    
+    %% Edge Processing
+    E --> H[Local Data Preprocessing]
+    H --> I[Data Validation & Cleaning]
+    I --> J[Feature Extraction]
+    
+    %% Communication Layer
+    J --> K[LoRaWAN Gateway]
+    K --> L[Cloud Data Pipeline]
+    
+    %% External Data Sources
+    M[Satellite Imagery] --> L
+    N[Historical Weather] --> L
+    O[Market Data] --> L
+    
+    %% Cloud Processing
+    L --> P[Data Lake Storage]
+    P --> Q[Real-time Stream Processing]
+    P --> R[Batch Data Processing]
+    
+    %% AI Models
+    Q --> S[LSTM Time Series Model]
+    R --> T[Random Forest Model]
+    Q --> U[CNN Image Analysis]
+    
+    %% Model Outputs
+    S --> V[Yield Prediction Engine]
+    T --> V
+    U --> W[Pest/Disease Detection]
+    
+    %% Decision Support
+    V --> X[Irrigation Controller]
+    V --> Y[Fertilization Scheduler]
+    W --> Z[Alert System]
+    
+    %% User Interface
+    V --> AA[Farmer Dashboard]
+    W --> AA
+    X --> AA
+    Y --> AA
+    Z --> AA
+    
+    %% Feedback Loop
+    AA --> BB[Farm Management Actions]
+    BB --> CC[New Sensor Data]
+    CC --> A
+    
+    %% Styling
+    classDef sensor fill:#e1f5fe
+    classDef processing fill:#f3e5f5
+    classDef ai fill:#e8f5e8
+    classDef output fill:#fff3e0
+    
+    class A,B,C,D,F,G,M,N,O sensor
+    class E,H,I,J,K,L,P,Q,R processing
+    class S,T,U,V,W ai
+    class X,Y,Z,AA,BB output
